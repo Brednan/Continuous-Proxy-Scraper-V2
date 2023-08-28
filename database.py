@@ -11,6 +11,9 @@ class ProxyDatabase:
                                                 password=password,
                                                 database='scraped_proxies')
 
+        self.__protocols = self.__get_protocols__()
+        self.__anonymity_levels = self.__get_anonymity_levels__()
+
     def __del__(self):
         self.__connection__.close()
 
@@ -19,22 +22,52 @@ class ProxyDatabase:
         res = cursor.fetchone()
         cursor.close()
 
-        if res is None:
+        if res is None or len(res) < 1:
             return None
 
         return res[0]
 
-    def __get_proxy_protocol_id__(self, proxy_type: str):
-        cursor = self.__connection__.cursor()
-        cursor.execute('SELECT type_id FROM proxy_types WHERE proxy_type = %s', (proxy_type,))
+    def __get_proxy_protocol_id__(self, proxy_type: str) -> int:
+        for p_type in self.__protocols:
+            if p_type[1] == proxy_type:
+                return p_type[0]
 
-        return self.__get_first_query_value__(cursor)
+        return 0
 
     def __get_proxy_anonymity_id__(self, anonymity: str):
-        cursor = self.__connection__.cursor()
-        cursor.execute('SELECT anonymity_level_id FROM anonymity_level WHERE anonymity_level = %s', (anonymity,))
+        for p_type in self.__anonymity_levels:
+            if p_type[1] == anonymity:
+                return p_type[0]
 
-        return self.__get_first_query_value__(cursor)
+        return 0
+
+    def __get_anonymity_level_by_id__(self, anonymity_id: int):
+        for a in self.__anonymity_levels:
+            if anonymity_id == a[0]:
+                return a[1]
+
+    def __get_protocol_by_id__(self, protocol_id: int):
+        for a in self.__protocols:
+            if protocol_id == a[0]:
+                return a[1]
+
+    def __get_protocols__(self):
+        cursor = self.__connection__.cursor()
+        cursor.execute('SELECT type_id, proxy_type FROM proxy_types')
+
+        res = cursor.fetchall()
+        cursor.close()
+
+        return res
+
+    def __get_anonymity_levels__(self):
+        cursor = self.__connection__.cursor()
+        cursor.execute('SELECT anonymity_level_id, anonymity_level FROM anonymity_level')
+
+        res = cursor.fetchall()
+        cursor.close()
+
+        return res
 
     def __reset_auto_increment(self, table_name):
         cursor = self.__connection__.cursor()
@@ -65,5 +98,38 @@ class ProxyDatabase:
                 self.__reset_auto_increment('proxies')
                 continue
 
-        print("Finished scraping proxies!")
         self.__connection__.commit()
+
+    def get_proxies_from_db(self, protocol=None, anonymity_level=None) -> list:
+        cursor = self.__connection__.cursor()
+
+        if protocol is None and anonymity_level is None:
+            cursor.execute('SELECT ip, port, proxy_type_id, anonymity_id FROM proxies')
+
+        elif anonymity_level is None:
+            protocol_id = self.__get_proxy_protocol_id__(protocol)
+
+            if protocol_id is not None:
+                cursor.execute('SELECT ip, port, proxy_type_id, anonymity_id FROM proxies WHERE proxy_type_id = %s',
+                               (protocol_id,))
+            else:
+                return []
+
+        elif protocol is None:
+            anonymity_level_id = self.__get_proxy_anonymity_id__(anonymity_level)
+
+            if anonymity_level_id is not None:
+                cursor.execute('SELECT ip, port, proxy_type_id, anonymity_id FROM proxies WHERE proxy_type_id = %s',
+                               (anonymity_level_id,))
+            else:
+                return []
+
+        proxies = []
+        res = cursor.fetchall()
+        cursor.close()
+        for p in res:
+            anonymity = self.__get_anonymity_level_by_id__(p[3])
+            protocol = self.__get_protocol_by_id__(p[2])
+            proxies.append(Proxy(p[0], p[1], protocol, anonymity))
+
+        return proxies

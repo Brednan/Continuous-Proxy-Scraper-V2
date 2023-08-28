@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 from proxy import Proxy, filter_duplicate_proxies
-from utilities import get_date_time_str
+from utilities import get_date_time_str, get_database_credentials
+from database import ProxyDatabase
 
 
 def scrape_free_proxy_list():
@@ -127,6 +128,10 @@ def scrape_proxyscrape_proxies() -> list:
 
 def scrape_proxies():
     proxies = scrape_geonode_proxies() + scrape_free_proxy_list() + scrape_proxyscrape_proxies()
-    filtered_proxies = filter_duplicate_proxies(proxies)
 
-    return filtered_proxies
+    mysql_ip, mysql_user, mysql_pass =  get_database_credentials()
+    db = ProxyDatabase(mysql_ip, mysql_user, mysql_pass)
+
+    existing_proxies = db.get_proxies_from_db()
+
+    return filter_duplicate_proxies(proxies + existing_proxies)
