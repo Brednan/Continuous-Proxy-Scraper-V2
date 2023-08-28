@@ -48,10 +48,12 @@ def scrape_geonode_proxies() -> list:
 
         data = requests.get(f'https://proxylist.geonode.com/api/proxy-list?limit=500&page={page_num}&sort_by=lastChecke'
                             f'd&sort_type=desc', headers=headers)
+        if not data.json():
+            break
 
-        proxy_list = data.json()['data']
+        proxy_list = data.json().get('data')
 
-        if len(proxy_list) <= 0:
+        if not proxy_list or len(proxy_list) <= 0:
             break
 
         for item in proxy_list:

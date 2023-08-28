@@ -11,9 +11,9 @@ if __name__ == '__main__':
         print(f'{get_date_time_str()} - Starting proxy scrape')
 
         proxies = scrape_proxies()
-        database = ProxyDatabase(mysql_ip, mysql_username, mysql_password)
         print(f'{get_date_time_str()} - Finished proxy scrape')
 
+        database = ProxyDatabase(mysql_ip, mysql_username, mysql_password)
         database.add_proxies(proxies)
 
         time.sleep(60*20)
