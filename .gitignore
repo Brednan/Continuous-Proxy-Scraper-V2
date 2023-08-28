@@ -3,3 +3,4 @@ env
 mysql.txt
 test.py
 __pycache__
+github_token
