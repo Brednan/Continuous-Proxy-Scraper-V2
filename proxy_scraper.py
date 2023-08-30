@@ -172,6 +172,7 @@ def scrape_free_proxy_cz() -> list:
             page_num += 1
             continue
 
+    print(f'{get_date_time_str()} - Finished scraping proxies from free-proxy.cz')
     return proxies
 
 
