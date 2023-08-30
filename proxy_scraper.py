@@ -4,6 +4,7 @@ from proxy import Proxy, filter_duplicate_proxies,ProxyParametersNullException
 from utilities import get_date_time_str, get_database_credentials
 from database import ProxyDatabase
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 
 
 def scrape_free_proxy_list():
@@ -140,8 +141,14 @@ def scrape_free_proxy_cz() -> list:
     proxies = []
 
     page_num = 1
+    options = Options()
+    options.add_argument("-profile")
+    # put the root directory your default profile path here,
+    # you can check it by opening Firefox and then pasting 'about:profiles' into the url field
+    options.add_argument("/home/brendan/snap/firefox/common/.mozilla/firefox/dhklfoeb.default-18236362302398")
+
     while page_num <= 40:
-        driver = webdriver.Firefox()
+        driver = webdriver.Firefox(options=options)
         driver.get(f'http://free-proxy.cz/en/proxylist/main/{page_num}')
         page_src = driver.page_source
         driver.close()
