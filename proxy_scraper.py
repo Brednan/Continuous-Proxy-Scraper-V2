@@ -177,8 +177,8 @@ def scrape_free_proxy_cz() -> list:
 
 
 def scrape_proxies():
-    proxies = scrape_proxyscrape_proxies() + scrape_free_proxy_list() + scrape_geonode_proxies()\
-              + scrape_free_proxy_cz()
+    proxies = scrape_free_proxy_cz() + scrape_proxyscrape_proxies() + scrape_free_proxy_list()\
+              + scrape_geonode_proxies()
 
     mysql_ip, mysql_user, mysql_pass = get_database_credentials()
     db = ProxyDatabase(mysql_ip, mysql_user, mysql_pass)
