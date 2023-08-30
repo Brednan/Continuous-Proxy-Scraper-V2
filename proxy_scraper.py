@@ -1,8 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
-from proxy import Proxy, filter_duplicate_proxies
+from proxy import Proxy, filter_duplicate_proxies,ProxyParametersNullException
 from utilities import get_date_time_str, get_database_credentials
 from database import ProxyDatabase
+from selenium import webdriver
 
 
 def scrape_free_proxy_list():
@@ -46,20 +47,27 @@ def scrape_geonode_proxies() -> list:
             'Referer': 'https://geonode.com/'
         }
 
-        data = requests.get(f'https://proxylist.geonode.com/api/proxy-list?limit=500&page={page_num}&sort_by=lastChecke'
-                            f'd&sort_type=desc', headers=headers)
-        if not data.json():
+        try:
+            res = requests.get(
+                f'https://proxylist.geonode.com/api/proxy-list?limit=500&page={page_num}&sort_by=lastChecke'
+                f'd&sort_type=desc', headers=headers, timeout=10)
+
+            res_json = res.json()
+            if not res_json:
+                break
+
+            proxy_list = res_json.get('data')
+
+            if not proxy_list or len(proxy_list) <= 0:
+                break
+
+            for item in proxy_list:
+                proxies.append(Proxy(item['ip'], item['port'], item['protocols'][0], item['anonymityLevel']))
+
+            page_num += 1
+
+        except (requests.exceptions.JSONDecodeError, requests.exceptions.ReadTimeout):
             break
-
-        proxy_list = data.json().get('data')
-
-        if not proxy_list or len(proxy_list) <= 0:
-            break
-
-        for item in proxy_list:
-            proxies.append(Proxy(item['ip'], item['port'], item['protocols'][0], item['anonymityLevel']))
-
-        page_num += 1
 
     print(f'{get_date_time_str()} - Finished scraping proxies from Geonode')
     return proxies
@@ -128,12 +136,52 @@ def scrape_proxyscrape_proxies() -> list:
     return proxies
 
 
-def scrape_proxies():
-    proxies = scrape_geonode_proxies() + scrape_free_proxy_list() + scrape_proxyscrape_proxies()
+def scrape_free_proxy_cz() -> list:
+    proxies = []
 
-    mysql_ip, mysql_user, mysql_pass =  get_database_credentials()
+    page_num = 1
+    while page_num <= 40:
+        driver = webdriver.Firefox()
+        driver.get(f'http://free-proxy.cz/en/proxylist/main/{page_num}')
+        page_src = driver.page_source
+        driver.close()
+
+        try:
+            soup = BeautifulSoup(page_src, 'html.parser')
+            table = soup.find('table', {'id': 'proxy_list'}).find('tbody')
+
+            for proxy in table.findAll('tr'):
+                ip = proxy.findNext('td')
+                port = ip.findNext('td')
+                protocol = port.findNext('td')
+                anonymity = protocol.findNext('td').findNext('td').findNext('td').findNext('td').text
+
+                if anonymity.lower() == 'high anonymity':
+                    anonymity = 'elite'
+
+                try:
+                    proxies.append(Proxy(ip.text.lower(), port.text.lower(), protocol.text.lower(),
+                                         anonymity.lower()))
+
+                except ProxyParametersNullException:
+                    pass
+
+            page_num += 1
+
+        except (AttributeError, ProxyParametersNullException):
+            page_num += 1
+            continue
+
+    return proxies
+
+
+def scrape_proxies():
+    proxies = scrape_geonode_proxies() + scrape_free_proxy_list() + scrape_proxyscrape_proxies()\
+              + scrape_free_proxy_cz()
+
+    mysql_ip, mysql_user, mysql_pass = get_database_credentials()
     db = ProxyDatabase(mysql_ip, mysql_user, mysql_pass)
 
     existing_proxies = db.get_proxies_from_db()
 
-    return filter_duplicate_proxies(proxies + existing_proxies)
+    return filter_duplicate_proxies(proxies, existing_proxies)
