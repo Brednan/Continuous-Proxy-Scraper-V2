@@ -142,10 +142,7 @@ def scrape_free_proxy_cz() -> list:
 
     page_num = 1
     options = Options()
-    options.add_argument("-profile")
-    # put the root directory your default profile path here,
-    # you can check it by opening Firefox and then pasting 'about:profiles' into the url field
-    options.add_argument("/home/brendan/snap/firefox/common/.mozilla/firefox/dhklfoeb.default-18236362302398")
+    options.binary_location = r'/usr/bin/firefox'
 
     while page_num <= 40:
         driver = webdriver.Firefox()
