@@ -145,7 +145,7 @@ def scrape_free_proxy_cz() -> list:
     options.binary_location = r'/usr/bin/firefox'
 
     while page_num <= 40:
-        driver = webdriver.Firefox()
+        driver = webdriver.Firefox(options=options)
         driver.get(f'http://free-proxy.cz/en/proxylist/main/{page_num}')
         page_src = driver.page_source
         driver.close()
