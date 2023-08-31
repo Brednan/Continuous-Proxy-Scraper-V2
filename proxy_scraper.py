@@ -148,7 +148,7 @@ def scrape_free_proxy_cz() -> list:
     options.add_argument("/home/brendan/snap/firefox/common/.mozilla/firefox/dhklfoeb.default-18236362302398")
 
     while page_num <= 40:
-        driver = webdriver.Firefox(options=options)
+        driver = webdriver.Firefox()
         driver.get(f'http://free-proxy.cz/en/proxylist/main/{page_num}')
         page_src = driver.page_source
         driver.close()
