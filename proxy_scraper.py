@@ -1,10 +1,12 @@
 import requests
+import selenium.common.exceptions
 from bs4 import BeautifulSoup
 from proxy import Proxy, filter_duplicate_proxies,ProxyParametersNullException
 from utilities import get_date_time_str, get_database_credentials
 from database import ProxyDatabase
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+from selenium.common.exceptions import WebDriverException
 
 
 def scrape_free_proxy_list():
@@ -175,6 +177,9 @@ def scrape_free_proxy_cz() -> list:
         except (AttributeError, ProxyParametersNullException):
             page_num += 1
             continue
+
+        except WebDriverException:
+            break
 
     print(f'{get_date_time_str()} - Finished scraping proxies from free-proxy.cz')
     return proxies
