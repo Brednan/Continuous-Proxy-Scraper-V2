@@ -6,7 +6,7 @@ from utilities import get_date_time_str, get_database_credentials
 from database import ProxyDatabase
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-from selenium.common.exceptions import WebDriverException
+from selenium.common.exceptions import WebDriverException, TimeoutException
 
 
 def scrape_free_proxy_list():
