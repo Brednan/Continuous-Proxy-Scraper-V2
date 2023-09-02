@@ -147,6 +147,7 @@ def scrape_free_proxy_cz() -> list:
     options.binary = r'/usr/bin/firefox'
 
     while page_num <= 20:
+        driver = None
         try:
             driver = webdriver.Firefox(options=options)
             driver.set_page_load_timeout(15)
@@ -154,6 +155,8 @@ def scrape_free_proxy_cz() -> list:
             page_src = driver.page_source
             driver.close()
         except (WebDriverException, TimeoutException):
+            if driver:
+                driver.close()
             break
 
         try:
