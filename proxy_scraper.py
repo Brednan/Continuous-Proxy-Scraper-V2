@@ -148,6 +148,7 @@ def scrape_free_proxy_cz() -> list:
 
     while page_num <= 20:
         driver = webdriver.Firefox(options=options)
+        driver.set_page_load_timeout(20)
         driver.get(f'http://free-proxy.cz/en/proxylist/main/{page_num}')
         page_src = driver.page_source
         driver.close()
