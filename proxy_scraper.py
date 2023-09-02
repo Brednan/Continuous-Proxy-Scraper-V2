@@ -147,11 +147,14 @@ def scrape_free_proxy_cz() -> list:
     options.binary = r'/usr/bin/firefox'
 
     while page_num <= 20:
-        driver = webdriver.Firefox(options=options)
-        driver.set_page_load_timeout(15)
-        driver.get(f'http://free-proxy.cz/en/proxylist/main/{page_num}')
-        page_src = driver.page_source
-        driver.close()
+        try:
+            driver = webdriver.Firefox(options=options)
+            driver.set_page_load_timeout(15)
+            driver.get(f'http://free-proxy.cz/en/proxylist/main/{page_num}')
+            page_src = driver.page_source
+            driver.close()
+        except (WebDriverException, TimeoutException):
+            break
 
         try:
             soup = BeautifulSoup(page_src, 'html.parser')
@@ -178,9 +181,6 @@ def scrape_free_proxy_cz() -> list:
         except (AttributeError, ProxyParametersNullException):
             page_num += 1
             continue
-
-        except (WebDriverException, TimeoutException):
-            break
 
     print(f'{get_date_time_str()} - Finished scraping proxies from free-proxy.cz')
     return proxies
