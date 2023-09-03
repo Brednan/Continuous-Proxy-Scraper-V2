@@ -24,22 +24,23 @@ class ProxyParametersNullException(Exception):
 
 
 class Proxy:
-    def __init__(self, ip, port, protocol, anonymity_level=None):
-        if not ip or not port or not protocol:
-            raise ProxyParametersNullException
-
+    def __init__(self, ip, port, protocol, anonymity_level=None, username=None, password=None, auth_required=False):
         self.ip = ip
         self.port = port
         self.protocol = protocol
-
-        if anonymity_level in ('transparent', 'anonymous', 'elite'):
-            self.anonymity_level = anonymity_level
-
-        else:
-            self.anonymity_level = None
+        self.anonymity_level = anonymity_level
+        self.username = username
+        self.password = password
+        self.auth_required = auth_required
 
     def __repr__(self):
+        if self.auth_required:
+            return f'{self.username}:{self.password}@{self.ip}:{self.port}'
+
         return f'{self.ip}:{self.port}'
 
     def __str__(self):
+        if self.auth_required:
+            return f'{self.username}:{self.password}@{self.ip}:{self.port}'
+
         return f'{self.ip}:{self.port}'
